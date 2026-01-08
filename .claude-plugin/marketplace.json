@@ -1,0 +1,27 @@
+{
+  "name": "alfred-cc-tools",
+  "owner": {
+    "name": "Screenfields",
+    "email": "[email protected]"
+  },
+  "metadata": {
+    "description": "Claude Code tools for the Alfred platform - content processing, automation, and productivity plugins",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "alfred-content",
+      "source": {
+        "source": "github",
+        "repo": "screenfields/ccplugin-alfred-content"
+      },
+      "description": "Content processing utilities - YouTube transcripts, summarization, and document analysis",
+      "version": "1.0.0",
+      "keywords": ["transcript", "youtube", "summarization", "content", "alfred"],
+      "category": "productivity",
+      "author": {
+        "name": "Screenfields"
+      }
+    }
+  ]
+}
