@@ -22,6 +22,20 @@
       "author": {
         "name": "Screenfields"
       }
+    },
+    {
+      "name": "alfred-agent-workflow",
+      "source": {
+        "source": "github",
+        "repo": "screenfields/ccplugin-alfred-agent-workflow"
+      },
+      "description": "Agent workflow utilities - messaging, coordination, and inter-agent communication",
+      "version": "1.0.0",
+      "keywords": ["messaging", "agents", "workflow", "communication", "alfred"],
+      "category": "productivity",
+      "author": {
+        "name": "Screenfields"
+      }
     }
   ]
 }
