@@ -24,13 +24,13 @@
       }
     },
     {
-      "name": "alfred-agent-workflow",
+      "name": "alfred-agent",
       "source": {
         "source": "github",
         "repo": "screenfields/ccplugin-alfred-agent-workflow"
       },
       "description": "Agent workflow utilities - messaging, coordination, and inter-agent communication",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "keywords": ["messaging", "agents", "workflow", "communication", "alfred"],
       "category": "productivity",
       "author": {
