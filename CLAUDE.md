@@ -8,6 +8,7 @@ Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**.
 - **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
 - **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
 - **Coordination:** when changes affect architecture (alfred-platform) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
+- **Current backlog:** `Screenfields/alfred-cc-tools#8` — D1-D5 deliverables (drop-issue, review, troubleshoot, merge, path-acl workflow).
 
 ## Constellation map
 
@@ -18,6 +19,8 @@ The lead-agent's domain spans 3 repos. Which repo holds what:
 | `Screenfields/alfred-cc-tools` (this repo) | Marketplace catalog (`.claude-plugin/marketplace.json`), cross-agent reusable GH Actions workflows (e.g., `.github/workflows/path-acl.yml` once it lands), README/LICENSE |
 | `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills like `alfred-agent:review`, `alfred-agent:merge`, `alfred-agent:troubleshoot`, `alfred-agent:drop-issue` land HERE, **not in this repo** |
 | `Screenfields/ccplugin-alfred-content` | Source for `alfred-content:*` skills (transcript, summarize) |
+
+This lead-agent fully owns all plugin source repos in the constellation. `ccplugin-alfred-agent-workflow` and `ccplugin-alfred-content` are equally within scope — do not weight one over the other.
 
 **Common mistake to avoid:** authoring a new `alfred-agent:*` skill in this repo. Skill SKILL.md files live in the plugin source repos. This repo only references them by version pin.
 
@@ -36,7 +39,7 @@ When the lead-agent authors a new skill or updates an existing one, the loop is:
 
 ## Cross-project doctrine (forward reference)
 
-Cross-project rules (the 9 doctrine items from the 2026-05-22 retro) will eventually live in `Screenfields/alfred-platform-docs`. **That repo does not exist yet.** When it lands, this CLAUDE.md should be thinned to reference it for cross-project rules instead of restating them.
+Cross-project rules (the 9 doctrine items from the 2026-05-22 retro) live in `Screenfields/alfred-platform-docs` (private). Doctrines are in PR #1; once merged, reference by path: `doctrines/01-verify-claims-about-state.md` through `doctrines/09-diagnostic-cleanup-contract.md`. When PR #1 merges, thin this CLAUDE.md to reference that repo instead of restating cross-project rules.
 
 ## Repository purpose (this repo)
 
@@ -172,3 +175,12 @@ Installed plugins are copied to a cache location, so:
 2. **Testing locally:** `/plugin marketplace add .` to test before pushing
 3. **Validation:** always run `/plugin validate .` before committing
 4. **Cross-repo work:** if a change requires updating a plugin source repo AND this catalog, land the source-repo PR first, then the catalog bump (otherwise consumers race ahead of the source)
+5. **Write access to plugin source repos:** Always clone with `gh repo clone Screenfields/<repo> /tmp/<name>` — never with an embedded token URL. Embedded-token clones read fine but `git push` silently fails with an auth error. After cloning set identity: `git config user.email "alfred-cc-tools@screenfields.net" && git config user.name "alfred-cc-tools-devbox"`.
+
+## Session startup checklist
+
+On every new session, confirm the SessionStart hook is registered:
+```bash
+grep -A3 SessionStart .claude/settings.local.json
+```
+Expected: a `command` entry pointing at `/usr/local/bin/alfred-inbox-watcher-hook.sh`. If absent, add it to `.claude/settings.local.json` under `hooks.SessionStart`. The hook arms Monitor on the inbox event log automatically. This is a manual step until the alfred-devbox base image seed step is fixed.
