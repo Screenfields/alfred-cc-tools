@@ -1,0 +1,5 @@
+# Protected paths for alfred-cc-tools
+# PRs from regular agents touching these paths get 'requires-elevated-merge' label.
+protected:
+  - .claude-plugin/
+  - .github/workflows/
