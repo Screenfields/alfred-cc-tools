@@ -1,54 +1,74 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**. This repo is the catalog hub of a 3-repo constellation that ships Claude Code plugins to every other agent on the Alfred platform.
 
-## Repository Purpose
+## Lead-agent role
 
-This is a Claude Code plugin marketplace repository for the Alfred platform. It serves as a central registry for distributing Claude Code plugins related to Alfred platform tools and utilities.
+- **Messaging identity:** `alfred-cc-tools` (registered in agent-messaging service). One identity owns all 3 repos in the constellation; worker sub-agents do not have their own identities.
+- **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
+- **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
+- **Coordination:** when changes affect architecture (alfred-platform) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
 
-This marketplace uses **remote plugins** - the repository contains only marketplace metadata that points to external plugin repositories hosted on GitHub. The actual plugin code lives in separate repositories.
+## Constellation map
 
-## Repository Structure
+The lead-agent's domain spans 3 repos. Which repo holds what:
+
+| Repo | Role |
+|------|------|
+| `Screenfields/alfred-cc-tools` (this repo) | Marketplace catalog (`.claude-plugin/marketplace.json`), cross-agent reusable GH Actions workflows (e.g., `.github/workflows/path-acl.yml` once it lands), README/LICENSE |
+| `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills like `alfred-agent:review`, `alfred-agent:merge`, `alfred-agent:troubleshoot`, `alfred-agent:drop-issue` land HERE, **not in this repo** |
+| `Screenfields/ccplugin-alfred-content` | Source for `alfred-content:*` skills (transcript, summarize) |
+
+**Common mistake to avoid:** authoring a new `alfred-agent:*` skill in this repo. Skill SKILL.md files live in the plugin source repos. This repo only references them by version pin.
+
+## Self-bootstrap rhythm
+
+When the lead-agent authors a new skill or updates an existing one, the loop is:
+
+1. Author/edit SKILL.md in the relevant plugin source repo (`ccplugin-alfred-agent-workflow` or `ccplugin-alfred-content`)
+2. Merge that PR
+3. Bump the version pin for the plugin in this repo's `.claude-plugin/marketplace.json`
+4. Merge the bump PR
+5. Lead-agent's devbox cold-restart picks up the new version via the `install-alfred-plugin` init container
+6. New session in the devbox has the new/updated skill loaded
+
+**The rhythm is "author -> release-bump -> restart -> use."** Not instant; cache + restart latency factor. Don't get confused why the skill you just authored isn't immediately available in the current session — it requires a devbox cold-restart. For urgent in-session use, the SKILL.md content can be referenced directly from the source repo, but the canonical loading path is via the marketplace pin.
+
+## Cross-project doctrine (forward reference)
+
+Cross-project rules (the 9 doctrine items from the 2026-05-22 retro) will eventually live in `Screenfields/alfred-platform-docs`. **That repo does not exist yet.** When it lands, this CLAUDE.md should be thinned to reference it for cross-project rules instead of restating them.
+
+## Repository purpose (this repo)
+
+Claude Code plugin marketplace for the Alfred platform — a central registry that distributes plugins to all platform agents. Uses **remote plugins**: contains only marketplace metadata pointing to external plugin repositories. Actual plugin code lives in the constellation's plugin source repos (see map above).
+
+## Repository structure
 
 ```
 .claude-plugin/
 └── marketplace.json    # Marketplace registry - defines available plugins
 
-README.md              # User-facing documentation
+.github/workflows/      # Reusable cross-agent GH Actions (e.g., path-acl.yml)
+README.md               # User-facing documentation
+CLAUDE.md               # This file
 ```
 
-## Marketplace Configuration
+## Marketplace configuration
 
-The `.claude-plugin/marketplace.json` file is the core of this repository. It defines:
+`.claude-plugin/marketplace.json` is the core of this repo.
 
-**Required Fields:**
-- `name`: Marketplace identifier (kebab-case, e.g., "alfred-cc-tools")
-- `owner`: Maintainer info with `name` (required) and `email` (optional)
-- `plugins`: Array of available plugins
+**Required fields:** `name` (kebab-case), `owner` (with `name`, optional `email`), `plugins` (array).
 
-**Optional Fields:**
-- `metadata.description`: Marketplace description
-- `metadata.version`: Marketplace version
+**Optional fields:** `metadata.description`, `metadata.version`.
 
-### Plugin Entry Structure
+### Plugin entry structure
 
-Each plugin in the `plugins` array has:
+Each entry in `plugins`:
 
-**Required:**
-- `name`: Plugin identifier (used as `plugin-name@marketplace-name`)
-- `source`: Where to fetch the plugin
+- **Required:** `name` (plugin identifier, used as `plugin-name@marketplace-name`), `source` (where to fetch).
+- **Optional:** `description`, `version`, `keywords`, `category`, `author`, `homepage`, `license`, `strict` (default `true` — plugin repo must have `.claude-plugin/plugin.json`).
 
-**Optional:**
-- `description`: What the plugin does
-- `version`: Plugin version
-- `keywords`: Array of tags for discovery
-- `category`: Plugin category (e.g., "productivity")
-- `author`: Author info object
-- `homepage`: Documentation URL
-- `license`: SPDX identifier
-- `strict`: Boolean (default: true) - when true, plugin repo must have `.claude-plugin/plugin.json`
-
-### Plugin Source Types
+### Plugin source types
 
 This marketplace uses GitHub sources:
 
@@ -62,69 +82,60 @@ This marketplace uses GitHub sources:
 }
 ```
 
-Other supported source types (not currently used):
-- Local/relative paths: `"source": "./plugins/plugin-name"`
-- Generic git URLs: `"source": { "source": "url", "url": "https://..." }`
+Other supported types (not currently used): local/relative paths (`"source": "./plugins/plugin-name"`), generic git URLs (`"source": { "source": "url", "url": "https://..." }`).
 
-## Adding New Plugins
+## Adding / bumping plugins
 
-When adding a new plugin to the marketplace:
+**Adding a new plugin to the catalog:**
 
 1. Ensure the plugin repository exists and has `.claude-plugin/plugin.json`
-2. Add a new entry to the `plugins` array in `.claude-plugin/marketplace.json`
-3. Update the README.md "Available Plugins" section with plugin details
-4. Validate the marketplace: `/plugin validate .`
-5. Commit and push changes
+2. Add an entry to `plugins` in `.claude-plugin/marketplace.json`
+3. Update README.md "Available Plugins" section
+4. Validate: `/plugin validate .` (or `claude plugin validate .`)
+5. Commit, push, PR
 
-**Important:**
-- Each plugin repository must contain its own `.claude-plugin/plugin.json` (since `strict` defaults to true)
+**Bumping a version pin** (most common operation here):
+
+1. Confirm the upstream plugin repo has the target version tagged + merged
+2. Edit `version` in the matching plugin entry in `marketplace.json`
+3. Commit message style: `alfred-agent: bump pin X.Y.Z -> A.B.C (<reason>)` — match recent commits
+4. Open PR; merge after CI
+
+**Constraints:**
+
+- Each plugin repository must contain its own `.claude-plugin/plugin.json` (since `strict` defaults to `true`)
 - Use kebab-case for plugin names
-- Ensure source repository is publicly accessible
+- Source repository must be publicly accessible
 
 ## Validation
 
-Before committing changes, validate the marketplace:
+Always validate before committing:
 
 ```bash
-# Using CLI
 claude plugin validate .
-
-# Or using slash command in Claude Code
+# or in Claude Code:
 /plugin validate .
 ```
 
-Common validation errors:
-- Invalid JSON syntax in marketplace.json
-- Duplicate plugin names
-- Missing required fields
+Common validation errors: invalid JSON, duplicate plugin names, missing required fields.
 
-## Installation Commands
-
-Users install this marketplace and its plugins using:
+## Installation commands (for users of the marketplace)
 
 ```bash
-# Add marketplace
 /plugin marketplace add screenfields/alfred-cc-tools
-
-# Install specific plugin
 /plugin install plugin-name@alfred-cc-tools
-
-# Update marketplace catalog
 /plugin marketplace update
 ```
 
-## Team Configuration
+## Team configuration
 
-For teams, plugins can be pre-configured in `.claude/settings.json`:
+Teams pre-configure in `.claude/settings.json`:
 
 ```json
 {
   "extraKnownMarketplaces": {
     "alfred-cc-tools": {
-      "source": {
-        "source": "github",
-        "repo": "screenfields/alfred-cc-tools"
-      }
+      "source": { "source": "github", "repo": "screenfields/alfred-cc-tools" }
     }
   },
   "enabledPlugins": {
@@ -133,26 +144,31 @@ For teams, plugins can be pre-configured in `.claude/settings.json`:
 }
 ```
 
-This automatically adds the marketplace and enables specified plugins for all team members.
+This auto-adds the marketplace and enables specified plugins for all team members.
 
-## Important Constraints
+## Important constraints
 
-### Reserved Marketplace Names
+### Reserved marketplace names
 
-Cannot use these reserved names:
-- `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`
-- `anthropic-marketplace`, `anthropic-plugins`
-- `agent-skills`, `life-sciences`
+Cannot use: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `life-sciences`.
 
-### Plugin Caching Behavior
+### Plugin caching behavior
 
-When plugins are installed, they're copied to a cache location. This means:
+Installed plugins are copied to a cache location, so:
+
 - Plugins **cannot reference files outside their directory** (no `../shared-utils`)
-- Use symlinks if sharing code between plugins (followed during copying)
-- Use `${CLAUDE_PLUGIN_ROOT}` variable for internal plugin references in hooks/MCP configs
+- Use symlinks to share code between plugins (followed during copying)
+- Use `${CLAUDE_PLUGIN_ROOT}` for internal plugin references in hooks/MCP configs
 
-## Development Workflow
+### Release conservatism
 
-1. **Adding a plugin**: Update marketplace.json → validate → update README → commit
-2. **Testing locally**: `/plugin marketplace add .` to test the marketplace before pushing
-3. **Validation**: Always run `/plugin validate .` before committing changes
+- Don't bump pins speculatively — only when the upstream change is merged and verified
+- Document the reason for cache-invalidation-only bumps in the PR title (see commit history pattern)
+- A bad pin here breaks every downstream agent's next devbox cold-restart
+
+## Development workflow
+
+1. **Adding a plugin:** update `marketplace.json` -> validate -> update README -> commit -> PR
+2. **Testing locally:** `/plugin marketplace add .` to test before pushing
+3. **Validation:** always run `/plugin validate .` before committing
+4. **Cross-repo work:** if a change requires updating a plugin source repo AND this catalog, land the source-repo PR first, then the catalog bump (otherwise consumers race ahead of the source)
