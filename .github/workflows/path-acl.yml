@@ -1,0 +1,166 @@
+name: Path ACL
+
+on:
+  workflow_call:
+
+jobs:
+  path-acl:
+    name: Check path ACL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Check protected paths and apply labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const AGENT_AUTHORS = ['alfred-lead-agent[bot]', 'alfred-worker-agent[bot]'];
+            const ELEVATED_LABEL = 'requires-elevated-merge';
+            const COVERAGE_LABEL = 'requires-coverage-decision';
+
+            const prNumber = context.payload.pull_request.number;
+            const prAuthor = context.payload.pull_request.user.login;
+            const headSha = context.payload.pull_request.head.sha;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Helper: ensure a label exists, creating it if necessary.
+            async function ensureLabel(name, color, description) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name,
+                  color: color.replace('#', ''),
+                  description,
+                });
+              } catch (err) {
+                if (err.status !== 422) throw err;
+                // 422 = label already exists — that's fine
+              }
+            }
+
+            // Helper: apply a label to the PR.
+            async function applyLabel(name) {
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: prNumber,
+                labels: [name],
+              });
+              core.info(`Applied label: ${name}`);
+            }
+
+            // 1. Is the PR author a regular agent?
+            const isAgent = AGENT_AUTHORS.includes(prAuthor);
+            core.info(`PR author: ${prAuthor} | isAgent: ${isAgent}`);
+
+            // 2. Get changed files.
+            const filesResp = await github.rest.pulls.listFiles({
+              owner,
+              repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+            const changedFiles = filesResp.data.map(f => f.filename);
+            core.info(`Changed files (${changedFiles.length}): ${changedFiles.join(', ')}`);
+
+            // 3. Read protected-paths config from the PR head SHA.
+            let protectedPaths = [];
+            try {
+              const contentResp = await github.rest.repos.getContent({
+                owner,
+                repo,
+                path: '.github/protected-paths.yml',
+                ref: headSha,
+              });
+              // Decode base64 content.
+              const raw = Buffer.from(contentResp.data.content, 'base64').toString('utf8');
+              // Minimal inline YAML parser: grab lines under `protected:` that look like `  - <value>`.
+              const lines = raw.split('\n');
+              let inProtected = false;
+              for (const line of lines) {
+                if (/^protected\s*:/.test(line)) {
+                  inProtected = true;
+                  continue;
+                }
+                if (inProtected) {
+                  const match = line.match(/^\s+-\s+(.+)$/);
+                  if (match) {
+                    protectedPaths.push(match[1].trim());
+                  } else if (/^\S/.test(line) && line.trim() !== '') {
+                    // New top-level key — stop collecting.
+                    inProtected = false;
+                  }
+                }
+              }
+              core.info(`Protected paths from config: ${protectedPaths.join(', ')}`);
+            } catch (err) {
+              if (err.status === 404) {
+                core.info('.github/protected-paths.yml not found — treating as no protected paths.');
+              } else {
+                throw err;
+              }
+            }
+
+            // Helper: does a file path match a protected prefix entry?
+            function matchesProtected(filePath, entry) {
+              if (entry.endsWith('/')) {
+                return filePath.startsWith(entry);
+              }
+              return filePath === entry || filePath.startsWith(entry + '/');
+            }
+
+            // 4. Apply `requires-elevated-merge` if agent touches a protected path.
+            if (isAgent) {
+              const touchesProtected = changedFiles.some(f =>
+                protectedPaths.some(p => matchesProtected(f, p))
+              );
+              if (touchesProtected) {
+                await ensureLabel(
+                  ELEVATED_LABEL,
+                  '#B60205',
+                  'Requires privileged agent to merge'
+                );
+                await applyLabel(ELEVATED_LABEL);
+              } else {
+                core.info('Agent PR does not touch any protected paths — no elevated label needed.');
+              }
+            }
+
+            // 5. Apply `requires-coverage-decision` for top-level dirs with no config coverage.
+            // Get unique top-level dirs from changed files.
+            const topLevelDirs = [...new Set(
+              changedFiles.map(f => f.includes('/') ? f.split('/')[0] : '.')
+            )];
+            core.info(`Top-level dirs touched: ${topLevelDirs.join(', ')}`);
+
+            // A top-level dir is "covered" if any protected-paths entry starts with it
+            // (covers the dir or a subpath of it) or equals it.
+            function isCovered(dir) {
+              return protectedPaths.some(p => {
+                const normalized = p.endsWith('/') ? p.slice(0, -1) : p;
+                // The entry covers the dir if:
+                // - it equals the dir
+                // - it starts with dir + '/' (subpath covered => the dir itself is referenced)
+                // - the dir equals the first segment of the entry
+                const firstSegment = normalized.split('/')[0];
+                return firstSegment === dir;
+              });
+            }
+
+            const uncoveredDirs = topLevelDirs.filter(d => !isCovered(d));
+            core.info(`Uncovered dirs: ${uncoveredDirs.join(', ')}`);
+
+            if (uncoveredDirs.length > 0) {
+              await ensureLabel(
+                COVERAGE_LABEL,
+                '#E4E669',
+                'PR touches paths not covered by protected-paths config'
+              );
+              await applyLabel(COVERAGE_LABEL);
+            }
+
+            // 6. Always exit 0 — informational only.
+            core.info('Path ACL check complete.');
