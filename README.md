@@ -25,6 +25,29 @@ Claude Code plugin marketplace for the Alfred platform - content processing, aut
 
 ## Available Plugins
 
+### alfred-agent
+
+Agent workflow utilities — messaging, coordination, ECR, and development discipline for the Alfred platform.
+
+**Features:**
+- **Messaging:** Inter-agent communication via bundled `agent-messaging` MCP (send, receive, threads, inbox management)
+- **Skills:** `design`, `develop`, `documentation`, `ecr`, `git-commit`, `land`, `retro`, `messaging`
+- **Slash commands:** `init`, `check-messages`, `show-inbox`, `show-threads`, plus one per skill
+- **ECR:** Expert Consulting Review — multi-model architectural feedback via LiteLLM (gpt-5.4, gemini-3.1-pro, glm-5)
+
+**Installation:**
+```bash
+/plugin install alfred-agent@alfred-cc-tools
+```
+
+**Usage:**
+```
+/alfred-agent:init                  # One-time project setup
+/alfred-agent:check-messages        # Check inbox from other agents
+/alfred-agent:develop               # Pick up a GitHub issue and implement it
+/alfred-agent:retro                 # Session retrospective + RSI
+```
+
 ### alfred-content
 
 Content processing utilities for YouTube transcripts, web articles, and document summarization.
@@ -84,7 +107,7 @@ Want to add your plugin to this marketplace? Open a PR with:
 
 ## Support
 
-- [Alfred Platform Documentation](https://alfred-platform-url)
+- [Alfred CC Tools on GitHub](https://github.com/Screenfields/alfred-cc-tools)
 - [Claude Code Plugin Docs](https://code.claude.com/docs/en/plugins)
 - Issues: Open an issue in the relevant plugin repository
 
