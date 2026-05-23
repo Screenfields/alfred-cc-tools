@@ -48,6 +48,22 @@ Agent workflow utilities — messaging, coordination, ECR, and development disci
 /alfred-agent:retro                 # Session retrospective + RSI
 ```
 
+### alfred-platform-ops
+
+Platform operations utilities for managing Alfred platform repositories.
+
+**Skills:**
+- `alfred-platform-ops:repo-management` — Repository lifecycle management with four sub-modes:
+  - `setup`: Scaffold a new repo with standard protection, labels, and structure
+  - `verify-access`: Diagnose the full App → gitops manifest → live token permission chain (all three layers)
+  - `audit`: Read-only compliance sweep — protection rules, required labels, standard files
+  - `update-protection`: Apply standard branch protection to a repo's main branch
+
+**Installation:**
+```bash
+/plugin install alfred-platform-ops@alfred-cc-tools
+```
+
 ### alfred-content
 
 Content processing utilities for YouTube transcripts, web articles, and document summarization.
