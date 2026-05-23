@@ -123,6 +123,8 @@ claude plugin validate .
 
 Common validation errors: invalid JSON, duplicate plugin names, missing required fields.
 
+**CI gate:** Every PR that touches `.claude-plugin/marketplace.json` runs `.github/workflows/validate-marketplace.yml`, which executes `.github/scripts/validate-marketplace.py` as a hard gate (structural errors fail the PR) with a warning-only existence check for each GitHub-sourced plugin repo.
+
 ## Installation commands (for users of the marketplace)
 
 ```bash
