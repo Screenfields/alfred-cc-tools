@@ -49,6 +49,26 @@
       "author": {
         "name": "Screenfields"
       }
+    },
+    {
+      "name": "alfred-platform-ops",
+      "source": {
+        "source": "github",
+        "repo": "screenfields/ccplugin-alfred-platform-ops"
+      },
+      "description": "Platform operations utilities — repo management, access verification, and infrastructure audit",
+      "version": "1.0.0",
+      "keywords": [
+        "repo-management",
+        "access",
+        "audit",
+        "alfred",
+        "ops"
+      ],
+      "category": "productivity",
+      "author": {
+        "name": "Screenfields"
+      }
     }
   ]
 }
