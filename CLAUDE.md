@@ -8,17 +8,18 @@ Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**.
 - **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
 - **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
 - **Coordination:** when changes affect architecture (alfred-platform) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
-- **Current backlog:** `Screenfields/alfred-cc-tools#8` — D1-D5 deliverables (drop-issue, review, troubleshoot, merge, path-acl workflow).
+- **Current backlog:** `Screenfields/alfred-cc-tools#12` closed (D6 alfred-platform-ops shipped). Open: `ccplugin-alfred-agent-workflow#3` (init skill cleanup). Pending: `administration: write` gitops grant for branch-protection self-serve.
 
 ## Constellation map
 
-The lead-agent's domain spans 3 repos. Which repo holds what:
+The lead-agent's domain spans 4 repos. Which repo holds what:
 
 | Repo | Role |
 |------|------|
-| `Screenfields/alfred-cc-tools` (this repo) | Marketplace catalog (`.claude-plugin/marketplace.json`), cross-agent reusable GH Actions workflows (e.g., `.github/workflows/path-acl.yml` once it lands), README/LICENSE |
-| `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills like `alfred-agent:review`, `alfred-agent:merge`, `alfred-agent:troubleshoot`, `alfred-agent:drop-issue` land HERE, **not in this repo** |
+| `Screenfields/alfred-cc-tools` (this repo) | Marketplace catalog (`.claude-plugin/marketplace.json`), cross-agent reusable GH Actions workflows, README/LICENSE |
+| `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills land HERE, **not in this repo** |
 | `Screenfields/ccplugin-alfred-content` | Source for `alfred-content:*` skills (transcript, summarize) |
+| `Screenfields/ccplugin-alfred-platform-ops` | Source for `alfred-platform-ops:*` skills (repo-management: setup, verify-access, audit, update-protection) |
 
 This lead-agent fully owns all plugin source repos in the constellation. `ccplugin-alfred-agent-workflow` and `ccplugin-alfred-content` are equally within scope — do not weight one over the other.
 
@@ -179,8 +180,24 @@ Installed plugins are copied to a cache location, so:
 
 ## Session startup checklist
 
-On every new session, confirm the SessionStart hook is registered:
-```bash
-grep -A3 SessionStart .claude/settings.local.json
-```
-Expected: a `command` entry pointing at `/usr/local/bin/alfred-inbox-watcher-hook.sh`. If absent, add it to `.claude/settings.local.json` under `hooks.SessionStart`. The hook arms Monitor on the inbox event log automatically. This is a manual step until the alfred-devbox base image seed step is fixed.
+On every new session:
+
+1. **Confirm the SessionStart hook is registered:**
+   ```bash
+   grep -A3 SessionStart .claude/settings.local.json
+   ```
+   Expected: a `command` entry pointing at `/usr/local/bin/alfred-inbox-watcher-hook.sh`. If absent, add it to `.claude/settings.local.json` under `hooks.SessionStart`.
+
+2. **Check inbox explicitly at session start** — run `/alfred-agent:check-messages` to catch any messages delivered while the session was down. Do NOT rely solely on Monitor notifications: the Monitor is a best-effort delivery channel (it dies on `/exit`, can crash silently, and only fires if the inbox-watcher writes events to the log). Explicit MCP check is the reliable baseline.
+
+3. **Monitor as supplement, not sole channel** — the Monitor (armed by the SessionStart hook) fires on new events in real time, but missed events are not replayed. If the Monitor is suspected broken (no notifications for a long time when messages were expected), re-arm it and run an explicit `/alfred-agent:check-messages`.
+
+## New repo in the constellation
+
+Adding a new plugin source repo requires a multi-step process due to the gitops token scoping:
+
+1. **User/admin creates the repo** — the lead App token cannot create new org repos (lacks `administration: write` at org level)
+2. **Message alfred-platform** to add the repo to the lead-role token-generator manifest in alfred-projects-gitops (same pattern as PR #38 for alfred-platform-docs, PR #41 for ccplugin-alfred-platform-ops)
+3. **Wait for token re-mint** — ESO re-mints within seconds of the gitops PR merging; verify with `gh api repos/Screenfields/<repo>`
+4. **Push content** — use fresh token: `LEAD_TOKEN=$(cat /var/run/secrets/gh-lead/token)`
+5. **Branch protection** — requires `administration: write` in the gitops manifest (separate from contents:write). Currently not granted; file with alfred-platform when needed.
