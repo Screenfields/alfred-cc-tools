@@ -36,7 +36,7 @@
         "repo": "screenfields/ccplugin-alfred-agent-workflow"
       },
       "description": "Agent workflow utilities - messaging, coordination, ECR, and RSI for the Alfred platform",
-      "version": "2.0.2",
+      "version": "2.0.3",
       "keywords": [
         "messaging",
         "agents",
