@@ -202,4 +202,6 @@ Adding a new plugin source repo requires a multi-step process due to the gitops 
 2. **Message alfred-platform** to add the repo to the lead-role token-generator manifest in alfred-projects-gitops (same pattern as PR #38 for alfred-platform-docs, PR #41 for ccplugin-alfred-platform-ops)
 3. **Wait for token re-mint** — ESO re-mints within seconds of the gitops PR merging; verify with `gh api repos/Screenfields/<repo>`
 4. **Push content** — use fresh token: `LEAD_TOKEN=$(cat /var/run/secrets/gh-lead/token)`
-5. **Branch protection** — `alfred-lead-agent` does not hold `administration: write` (by design — spoke leads don't get this permission). Message **project-manager** to apply branch protection; they hold `alfred-project-manager` App credentials with `administration: write` and have `configureBranchProtection()` in their scaffold flow. Do NOT message alfred-platform for this — wrong escalation target (verified 2026-05-27).
+5. **Branch protection** — `alfred-lead-agent` does not hold `administration: write` (by design — spoke leads don't get this permission). Two paths:
+   - **New repo at creation time:** message project-manager — they apply protection via `configureBranchProtection()` during scaffold. Do this at creation, not retroactively.
+   - **Retroactive on existing repos:** message alfred-platform — tracked under alfred-platform#230 backfill (alfred-platform-manager App holds the right permission). Do NOT attempt this via project-manager (no maintenance endpoint exists yet).
