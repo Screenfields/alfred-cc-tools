@@ -8,7 +8,7 @@ Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**.
 - **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
 - **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
 - **Coordination:** when changes affect architecture (alfred-platform) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
-- **Current backlog:** `Screenfields/alfred-cc-tools#12` closed (D6 alfred-platform-ops shipped). Open: `ccplugin-alfred-agent-workflow#3` (init skill cleanup). Pending: `administration: write` gitops grant for branch-protection self-serve.
+- **Current backlog:** `Screenfields/alfred-cc-tools#12` closed (D6 alfred-platform-ops shipped). Open: `ccplugin-alfred-agent-workflow#3` (init skill cleanup), `alfred-cc-tools#24` (PR template with breaking-change checkbox), `ccplugin-alfred-agent-workflow#51` (version drift detection), `ccplugin-alfred-agent-workflow#52` (topic pub/sub docs).
 
 ## Constellation map
 
@@ -202,4 +202,4 @@ Adding a new plugin source repo requires a multi-step process due to the gitops 
 2. **Message alfred-platform** to add the repo to the lead-role token-generator manifest in alfred-projects-gitops (same pattern as PR #38 for alfred-platform-docs, PR #41 for ccplugin-alfred-platform-ops)
 3. **Wait for token re-mint** — ESO re-mints within seconds of the gitops PR merging; verify with `gh api repos/Screenfields/<repo>`
 4. **Push content** — use fresh token: `LEAD_TOKEN=$(cat /var/run/secrets/gh-lead/token)`
-5. **Branch protection** — requires `administration: write` in the gitops manifest (separate from contents:write). Currently not granted; file with alfred-platform when needed.
+5. **Branch protection** — `alfred-lead-agent` does not hold `administration: write` (by design — spoke leads don't get this permission). Message **project-manager** to apply branch protection; they hold `alfred-project-manager` App credentials with `administration: write` and have `configureBranchProtection()` in their scaffold flow. Do NOT message alfred-platform for this — wrong escalation target (verified 2026-05-27).
