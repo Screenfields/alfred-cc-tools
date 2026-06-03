@@ -11,4 +11,8 @@ Thumbs.db
 # Temporary files
 *.log
 .cache/
-.alfred/
+# .alfred runtime state (start.sh and config.json are tracked)
+.alfred/events.log
+.alfred/heartbeat
+.alfred/watcher.err
+.alfred/init-complete
