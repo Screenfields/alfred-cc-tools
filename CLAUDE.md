@@ -125,6 +125,8 @@ Common validation errors: invalid JSON, duplicate plugin names, missing required
 
 **CI gate:** Every PR that touches `.claude-plugin/marketplace.json` runs `.github/workflows/validate-marketplace.yml`, which executes `.github/scripts/validate-marketplace.py` as a hard gate (structural errors fail the PR) with a warning-only existence check for each GitHub-sourced plugin repo.
 
+**CI runner convention:** This repo is **public** — workflows must use `runs-on: ubuntu-latest` (GitHub-hosted, free for public repos). Never use `runs-on: [self-hosted, ci]` here — that runner group blocks public repositories by design (security: prevents arbitrary fork PRs from executing on PVE build VMs). The self-hosted runner policy applies to **private** repos only.
+
 ## Installation commands (for users of the marketplace)
 
 ```bash
