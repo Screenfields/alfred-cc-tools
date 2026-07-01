@@ -6,7 +6,7 @@ on:
 jobs:
   path-acl:
     name: Check path ACL
-    runs-on: [self-hosted, ci]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
