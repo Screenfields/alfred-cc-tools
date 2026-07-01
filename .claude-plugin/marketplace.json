@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Claude Code tools for the Alfred platform - content processing, automation, and productivity plugins",
-    "version": "1.0.1"
+    "version": "1.0.0"
   },
   "plugins": [
     {
