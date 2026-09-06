@@ -36,7 +36,7 @@
         "repo": "screenfields/ccplugin-alfred-agent-workflow"
       },
       "description": "Agent workflow utilities - messaging, coordination, ECR, and RSI for the Alfred platform",
-      "version": "2.7.0",
+      "version": "2.8.0",
       "keywords": [
         "messaging",
         "agents",
@@ -56,7 +56,7 @@
         "source": "github",
         "repo": "screenfields/ccplugin-alfred-platform-ops"
       },
-      "description": "Platform operations utilities — repo management, access verification, and infrastructure audit",
+      "description": "Platform operations utilities \u2014 repo management, access verification, and infrastructure audit",
       "version": "1.0.0",
       "keywords": [
         "repo-management",
