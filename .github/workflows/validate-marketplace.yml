@@ -8,7 +8,7 @@ on:
 jobs:
   validate:
     name: Validate marketplace.json
-    runs-on: [self-hosted, ci]
+    runs-on: ubuntu-latest
     permissions:
       contents: read
 
