@@ -184,17 +184,21 @@ Installed plugins are copied to a cache location, so:
 
 ## Session startup checklist
 
-On every new session:
+On every new session (the devbox boot sends a wake prompt that does steps 1 and 2):
 
-1. **Confirm the SessionStart hook is registered:**
-   ```bash
-   grep -A3 SessionStart .claude/settings.local.json
-   ```
-   Expected: a `command` entry pointing at `/usr/local/bin/alfred-inbox-watcher-hook.sh`. If absent, add it to `.claude/settings.local.json` under `hooks.SessionStart`.
+1. **Start the wake bridge** as a background Bash task (`run_in_background: true`):
+   `alfred-wake wait`. It is deterministic, exits on the first `WAKE …` line, and costs
+   no tokens while it waits. There is no Monitor and no polling loop: the inbox-watcher hook
+   was retired 2026-06-09 (ccplugin-alfred-agent-workflow#78), and doctrine 22 forbids
+   scheduled checks that spend model tokens.
+2. **Check the inbox once** with `/alfred-agent:check-messages`, which catches anything that
+   arrived while the session was down.
+3. **After every wake:** read the inbox, mark everything read (unread means "not yet
+   delivered"; to-dos go in issues), then relaunch `alfred-wake wait`. A wake with no news
+   produces no text.
 
-2. **Check inbox explicitly at session start** — run `/alfred-agent:check-messages` to catch any messages delivered while the session was down. Do NOT rely solely on Monitor notifications: the Monitor is a best-effort delivery channel (it dies on `/exit`, can crash silently, and only fires if the inbox-watcher writes events to the log). Explicit MCP check is the reliable baseline.
-
-3. **Monitor as supplement, not sole channel** — the Monitor (armed by the SessionStart hook) fires on new events in real time, but missed events are not replayed. If the Monitor is suspected broken (no notifications for a long time when messages were expected), re-arm it and run an explicit `/alfred-agent:check-messages`.
+The owner-communication rules (timestamp line, local time, links, no blocking menus) are
+injected by the alfred-agent plugin's SessionStart hook; nothing to set up here.
 
 ## New repo in the constellation
 
