@@ -187,7 +187,9 @@ Installed plugins are copied to a cache location, so:
 On every new session (the devbox boot sends a wake prompt that does steps 1 and 2):
 
 1. **Start the wake bridge** as a background Bash task (`run_in_background: true`):
-   `alfred-wake wait`. It is deterministic, exits on the first `WAKE …` line, and costs
+   `alfred-wake wait`. If `alfred-wake` is not on PATH, install it first (the README's
+   fallback): `command -v alfred-wake >/dev/null 2>&1 || "${CLAUDE_PLUGIN_ROOT}/bin/alfred-wake" install`,
+   then optionally `alfred-wake check` for a dry run. The bridge is deterministic, exits on the first `WAKE …` line, and costs
    no tokens while it waits. There is no Monitor and no polling loop: the inbox-watcher hook
    was retired 2026-06-09 (ccplugin-alfred-agent-workflow#78), and doctrine 22 forbids
    scheduled checks that spend model tokens.
