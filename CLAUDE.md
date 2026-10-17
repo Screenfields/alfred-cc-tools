@@ -7,7 +7,7 @@ Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**.
 - **Messaging identity:** `alfred-cc-tools` (registered in agent-messaging service). One identity owns all 3 repos in the constellation; worker sub-agents do not have their own identities.
 - **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
 - **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
-- **Coordination:** when changes affect architecture (alfred-platform) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
+- **Coordination:** when changes affect architecture (the hub, messaging identity `hub`; repo `Screenfields/alfred-platform`) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
 - **Current backlog:** `Screenfields/alfred-cc-tools#12` closed (D6 alfred-platform-ops shipped). Open: `ccplugin-alfred-agent-workflow#3` (init skill cleanup), `alfred-cc-tools#24` (PR template with breaking-change checkbox), `ccplugin-alfred-agent-workflow#51` (version drift detection), `ccplugin-alfred-agent-workflow#52` (topic pub/sub docs).
 
 ## Constellation map
@@ -207,9 +207,9 @@ injected by the alfred-agent plugin's SessionStart hook; nothing to set up here.
 Adding a new plugin source repo requires a multi-step process due to the gitops token scoping:
 
 1. **User/admin creates the repo** — the lead App token cannot create new org repos (lacks `administration: write` at org level)
-2. **Message alfred-platform** to add the repo to the lead-role token-generator manifest in alfred-projects-gitops (same pattern as PR #38 for alfred-platform-docs, PR #41 for ccplugin-alfred-platform-ops)
+2. **Message the hub (`hub`)** to add the repo to the lead-role token-generator manifest in alfred-projects-gitops (same pattern as PR #38 for alfred-platform-docs, PR #41 for ccplugin-alfred-platform-ops)
 3. **Wait for token re-mint** — ESO re-mints within seconds of the gitops PR merging; verify with `gh api repos/Screenfields/<repo>`
 4. **Push content** — use fresh token: `LEAD_TOKEN=$(cat /var/run/secrets/gh-lead/token)`
 5. **Branch protection** — `alfred-lead-agent` does not hold `administration: write` (by design — spoke leads don't get this permission). Two paths:
    - **New repo at creation time:** message project-manager — they apply protection via `configureBranchProtection()` during scaffold. Do this at creation, not retroactively.
-   - **Retroactive on existing repos:** message alfred-platform — tracked under alfred-platform#230 backfill (alfred-platform-manager App holds the right permission). Do NOT attempt this via project-manager (no maintenance endpoint exists yet).
+   - **Retroactive on existing repos:** message the hub (`hub`) — tracked under alfred-platform#230 backfill (alfred-platform-manager App holds the right permission). Do NOT attempt this via project-manager (no maintenance endpoint exists yet).
