@@ -1,18 +1,18 @@
 # CLAUDE.md
 
-Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**. This repo is the catalog hub of a 3-repo constellation that ships Claude Code plugins to every other agent on the Alfred platform.
+Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**. This repo is the catalog hub of the constellation of repos (see the map below) that ships Claude Code plugins to every other agent on the Alfred platform.
 
 ## Lead-agent role
 
-- **Messaging identity:** `alfred-cc-tools` (registered in agent-messaging service). One identity owns all 3 repos in the constellation; worker sub-agents do not have their own identities.
-- **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows.
+- **Messaging identity:** `alfred-cc-tools` (registered in agent-messaging service). One identity owns all repos in the constellation; worker sub-agents do not have their own identities.
+- **Scope:** marketplace catalog, plugin source repos, cross-agent reusable GH Actions workflows, and the Agent Skills repos (`agent-skills-dev`, `agent-skills`).
 - **Blast radius:** tooling shipped here propagates to every platform agent via the marketplace. Mistakes here propagate fastest of any project on the platform — **be conservative on releases**, prefer minor version bumps with cache-invalidation rationale documented in the PR, and run `alfred-agent:review` on PRs once that skill exists.
 - **Coordination:** when changes affect architecture (the hub, messaging identity `hub`; repo `Screenfields/alfred-platform`) or project scaffolding (project-manager), message those agents via agent-messaging before merging. Do not unilaterally land changes that other leads need to adopt.
 - **Current backlog:** `Screenfields/alfred-cc-tools#12` closed (D6 alfred-platform-ops shipped). Open: `ccplugin-alfred-agent-workflow#3` (init skill cleanup), `alfred-cc-tools#24` (PR template with breaking-change checkbox), `ccplugin-alfred-agent-workflow#51` (version drift detection), `ccplugin-alfred-agent-workflow#52` (topic pub/sub docs).
 
 ## Constellation map
 
-The lead-agent's domain spans 4 repos. Which repo holds what:
+The lead-agent's domain spans 6 repos. Which repo holds what:
 
 | Repo | Role |
 |------|------|
@@ -20,10 +20,12 @@ The lead-agent's domain spans 4 repos. Which repo holds what:
 | `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills land HERE, **not in this repo** |
 | `Screenfields/ccplugin-alfred-content` | Source for `alfred-content:*` skills (transcript, summarize) |
 | `Screenfields/ccplugin-alfred-platform-ops` | Source for `alfred-platform-ops:*` skills (repo-management: setup, verify-access, audit, update-protection) |
+| `Screenfields/agent-skills-dev` (private) | Development repo for the public Agent Skills (Motion Story); iterations `v0.N.0` (CC-118) |
+| `Screenfields/agent-skills` (public from v1) | Public Agent Skills repo, filled only by export from `agent-skills-dev`. Owner approval rules: CHARTER.md |
 
-This lead-agent fully owns all plugin source repos in the constellation. `ccplugin-alfred-agent-workflow` and `ccplugin-alfred-content` are equally within scope — do not weight one over the other.
+This lead-agent fully owns all plugin source repos in the constellation; for the Agent Skills repos, public-facing work also needs the owner's approval (CHARTER.md). `ccplugin-alfred-agent-workflow` and `ccplugin-alfred-content` are equally within scope — do not weight one over the other.
 
-**Common mistake to avoid:** authoring a new `alfred-agent:*` skill in this repo. Skill SKILL.md files live in the plugin source repos. This repo only references them by version pin.
+**Common mistake to avoid:** authoring a new `alfred-agent:*` skill in this repo. SKILL.md files for the `alfred-*` plugins live in the plugin source repos, and this repo only references them by version pin. The Agent Skills live in `agent-skills-dev` (see the map).
 
 ## Self-bootstrap rhythm
 
