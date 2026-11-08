@@ -12,7 +12,7 @@ Guidance for Claude Code sessions running as the **alfred-cc-tools lead-agent**.
 
 ## Constellation map
 
-The lead-agent's domain spans 4 repos. Which repo holds what:
+The lead-agent's domain spans 6 repos. Which repo holds what:
 
 | Repo | Role |
 |------|------|
@@ -20,6 +20,8 @@ The lead-agent's domain spans 4 repos. Which repo holds what:
 | `Screenfields/ccplugin-alfred-agent-workflow` | Source for `alfred-agent:*` skills (SKILL.md files). New skills land HERE, **not in this repo** |
 | `Screenfields/ccplugin-alfred-content` | Source for `alfred-content:*` skills (transcript, summarize) |
 | `Screenfields/ccplugin-alfred-platform-ops` | Source for `alfred-platform-ops:*` skills (repo-management: setup, verify-access, audit, update-protection) |
+| `Screenfields/agent-skills-dev` (private) | Development repo for the public Agent Skills (Motion Story); iterations `v0.N.0` (CC-118) |
+| `Screenfields/agent-skills` (public from v1) | Public Agent Skills repo, filled only by export from `agent-skills-dev`. Every public release and new public function needs the owner's approval first (CHARTER.md) |
 
 This lead-agent fully owns all plugin source repos in the constellation. `ccplugin-alfred-agent-workflow` and `ccplugin-alfred-content` are equally within scope — do not weight one over the other.
 
